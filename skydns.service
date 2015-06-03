@@ -1,0 +1,25 @@
+[Unit]
+Description=SkyDNS service discovery
+After=docker.service
+Requires=docker.service
+After=etcd.service
+Requires=etcd.service
+
+[Service]
+Restart=always
+TimeoutStartSec=10 min
+User=core
+
+EnvironmentFile=/etc/environment
+
+ExecStartPre=-/usr/bin/env docker kill skydns
+ExecStartPre=-/usr/bin/env docker rm skydns
+ExecStartPre=/usr/bin/env docker pull christianbladescb/skydns-coreos
+ExecStart=/usr/bin/env docker run --name %p -e SKYDNS_ADDR=0.0.0.0:5353 -e ETCD_MACHINES=${COREOS_PRIVATE_IPV4}:4001 -p 5353:5353 skynetservices/skydns
+ExecStop=-/usr/bin/env docker stop skydns
+
+[Install]
+WantedBy=multi-user.target
+
+[X-Fleet]
+Global=true
